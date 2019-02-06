@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
-from sqlalchemy import exists 
+from sqlalchemy import exists
+from sqlalchemy.ext.declarative import declarative_base
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from datetime import datetime
@@ -13,6 +14,7 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
 class User(db.Model):
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80))
 
@@ -28,10 +30,26 @@ user_schema = UserSchema()
 users_schema = UserSchema(many=True)
 
 
+class Follower(db.Model):
+    __tablename__ = 'followers'
+    follower_id = db.Column(db.Integer, db.Foreignkey('users.id'))
+    followee_id = db.Column(db.Integer, db.Foreignkey('users.id'))
+    follower = db.relationship('User', foreign_keys="follower_id", backref = 'followees')
+
+
+class FollowerSchema(ma.Schema):
+    class Meta:
+        # Fields to expose
+        fields = ('follower_id', 'followee_id')
+        
+follower_schema = FollowerSchema()
+followers_schema = FollowerSchema(many=True)
+
+
 class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     actor = db.Column(db.String(80), db.ForeignKey('user.id'), nullable=False)
-    verb = db.Column(db.String(80))
+    verb = db.Column(db.String(80), nullable=False)
     object = db.Column(db.String(80))
     target = db.Column(db.String(80), db.ForeignKey('user.id'), nullable=False)
     datetime = db.Column(db.DateTime, default=datetime.utcnow)
@@ -106,6 +124,9 @@ def add_activity():
     (actor_exists, ), = db.session.query(exists().where(User.username==actor))
     (target_exists, ), = db.session.query(exists().where(User.username==target))
 
+    if not verb:
+        return jsonify({"error": "empty verb" })
+
     if actor_exists:
         if  target_exists:
             new_activity = Activity(actor, verb, object, target)
@@ -129,4 +150,21 @@ def get_user_feed(username):
         return jsonify(result)
     else:
         return jsonify({"error": "no user named %s" % username })
+
+# endpoint to follow user feed
+@app.route("/feed/<username>/", methods=["POST"])
+def follow_user_feed(username):
+
+    follow = request.json['follow']
+
+    if not follow:
+        jsonify({"error": "no user to follow" })
     
+    (username_exists, ), = db.session.query(exists().where(User.username==username))
+
+    if  username_exists:
+        user_feed = Activity.query.filter_by(actor=username).all()
+        result = { "my_feed": activities_schema.dump(user_feed).data}
+        return jsonify(result)
+    else:
+        return jsonify({"error": "no user named %s" % username })
