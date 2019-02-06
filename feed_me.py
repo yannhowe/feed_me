@@ -50,6 +50,7 @@ class ActivitySchema(ma.Schema):
 activity_schema = ActivitySchema()
 activities_schema = ActivitySchema(many=True)
 
+
 @app.route("/")
 def hello():
     return "Hello World!"
@@ -115,3 +116,17 @@ def add_activity():
             return jsonify({"error": "no target named %s" % target })
     else:
             return jsonify({"error": "no actor named %s" % actor })
+
+# endpoint to show user feed
+@app.route("/feed/<username>", methods=["GET"])
+def get_user_feed(username):
+    
+    (username_exists, ), = db.session.query(exists().where(User.username==username))
+
+    if  username_exists:
+        user_feed = Activity.query.filter_by(actor=username).all()
+        result = { "my_feed": activities_schema.dump(user_feed).data}
+        return jsonify(result)
+    else:
+        return jsonify({"error": "no user named %s" % username })
+    

@@ -33,3 +33,23 @@ stages:
         verb: "punched"
         object: "null"
         target: "niko"
+
+---
+
+test_name: Activity Feed
+
+stages:
+  - name: Flask is up!
+    request:
+      url: http://127.0.0.1:5000/
+      method: GET
+  - name: Get activity Feed
+    request:
+      url: http://127.0.0.1:5000/feed/ivan
+      method: GET
+      headers:
+        content-type: application/json
+    response:
+      status_code: 200
+      body:
+        my_feed: !anything
