@@ -8,6 +8,9 @@ verify_ssl = true
 [packages]
 flask = "*"
 tavern = {extras = ["pytest"],version = "*"}
+flask-sqlalchemy = "*"
+flask-marshmallow = "*"
+marshmallow-sqlalchemy = "*"
 
 [requires]
 python_version = "3.7"

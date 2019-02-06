@@ -1,5 +1,7 @@
 ---
+
 test_name: Hello World
+
 stages:
   - name: Flask is up!
     request:
@@ -7,3 +9,27 @@ stages:
       method: GET
     response:
       status_code: 200
+
+---
+
+test_name: Activities
+
+stages:
+  - name: Create activity
+    request:
+      url: http://127.0.0.1:5000/activity
+      method: POST
+      json:
+        actor: "eric"
+        verb: "punched"
+        object: "null"
+        target: "niko"
+      headers:
+        content-type: application/json
+    response:
+      status_code: 200
+      body:
+        actor: "eric"
+        verb: "punched"
+        object: "null"
+        target: "niko"

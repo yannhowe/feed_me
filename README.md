@@ -6,6 +6,9 @@ feed-me is a social media activity feed.
 - Python 3.7
 - Flask: Python Framework
 - Tavern[pytest]: Testing 
+- flask_sqlalchemy
+- flask_marshmallow
+- marshmallow-sqlalchemy
 
 ## Quick Start
 - Clone repository
