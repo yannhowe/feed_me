@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
-from sqlalchemy import exists
+from sqlalchemy import exists, Integer, ForeignKey,  Column, Table
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from datetime import datetime
@@ -13,45 +14,66 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'fe
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
+user_follow_user = db.Table("user_follow_user",
+    db.Column("follower_id", db.Integer, db.ForeignKey("users.id")),
+    db.Column("followee_id", db.Integer, db.ForeignKey("users.id"))
+)
+
+#Base = declarative_base()
+#
+#user_follow_user = Table("user_follow_user", Base.metadata,
+#    Column("follower_id", Integer, ForeignKey("users.id"), primary_key=True),
+#    Column("followee_id", Integer, ForeignKey("users.id"), primary_key=True)
+#)
+
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80))
+    followees = db.relationship("User",
+                    secondary=user_follow_user,
+                    primaryjoin=id==user_follow_user.c.follower_id,
+                    secondaryjoin=id==user_follow_user.c.followee_id,
+                    backref=db.backref("followers", lazy='joined'), lazy='dynamic')
 
-    def __init__(self, username):
+    def __init__(self, username, followees):
         self.username = username
+        self.followees = followees
 
 class UserSchema(ma.Schema):
     class Meta:
         # Fields to expose
-        fields = ('id', 'username')
+        fields = ('id', 'username', 'followees')
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
 
 
-class Follower(db.Model):
-    __tablename__ = 'followers'
-    follower_id = db.Column(db.Integer, db.Foreignkey('users.id'))
-    followee_id = db.Column(db.Integer, db.Foreignkey('users.id'))
-    follower = db.relationship('User', foreign_keys="follower_id", backref = 'followees')
+#class Follower(db.Model):
+#    id = db.Column(db.Integer, primary_key=True)
+#    follower_id = db.Column(db.Integer)
+#    followee_id = db.Column(db.Integer, db.Foreignkey('user.id'))
+#    follower = db.relationship('User', backref = 'followees')
+#
+#    def __init__(self, follower_id, followee_id):
+#        self.follower_id = follower_id
+#        self.followee_id = followee_id
 
-
-class FollowerSchema(ma.Schema):
-    class Meta:
-        # Fields to expose
-        fields = ('follower_id', 'followee_id')
-        
-follower_schema = FollowerSchema()
-followers_schema = FollowerSchema(many=True)
+#class FollowerSchema(ma.Schema):
+#    class Meta:
+#        # Fields to expose
+#        fields = ('follower_id', 'followee_id')
+#        
+#follower_schema = FollowerSchema()
+#followers_schema = FollowerSchema(many=True)
 
 
 class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    actor = db.Column(db.String(80), db.ForeignKey('user.id'), nullable=False)
+    actor = db.Column(db.String(80), db.ForeignKey('users.id'), nullable=False)
     verb = db.Column(db.String(80), nullable=False)
     object = db.Column(db.String(80))
-    target = db.Column(db.String(80), db.ForeignKey('user.id'), nullable=False)
+    target = db.Column(db.String(80), db.ForeignKey('users.id'), nullable=False)
     datetime = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __init__(self, actor, verb, object, target):
@@ -112,6 +134,13 @@ def get_activity():
     result = activities_schema.dump(all_activity)
     return jsonify(result.data)
 
+# endpoint to show all follows
+@app.route("/follow", methods=["GET"])
+def get_follows():
+    all_follows = User.query.all()
+    result = UserSchema.dump(all_follows)
+    return jsonify(result.data)
+
 # endpoint to create new activity
 @app.route("/activity", methods=["POST"])
 def add_activity():
@@ -120,7 +149,7 @@ def add_activity():
     object = request.json['object']
     target = request.json['target']
 
-    # Checks https://techspot.zzzeek.org/2008/09/09/selecting-booleans/
+    # Checks - https://techspot.zzzeek.org/2008/09/09/selecting-booleans/
     (actor_exists, ), = db.session.query(exists().where(User.username==actor))
     (target_exists, ), = db.session.query(exists().where(User.username==target))
 
@@ -154,11 +183,13 @@ def get_user_feed(username):
 # endpoint to follow user feed
 @app.route("/feed/<username>/", methods=["POST"])
 def follow_user_feed(username):
+    
+    if request.json['follow']:
+        username = request.json['follow']
+        return jsonify({"error": "no key named \'follow\'" })
 
-    follow = request.json['follow']
-
-    if not follow:
-        jsonify({"error": "no user to follow" })
+    if not username:
+        jsonify({"error": "user to follow not specified" })
     
     (username_exists, ), = db.session.query(exists().where(User.username==username))
 
