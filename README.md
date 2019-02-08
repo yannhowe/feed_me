@@ -9,10 +9,21 @@ feed-me is a social media activity feed.
 - flask_sqlalchemy
 - flask_marshmallow
 - marshmallow-sqlalchemy
+- docker/docker-compose
+
 
 ## Quick Start
+
+### Docker Compose
+```
+git clone https://github.com/yannhowe/feed_me.git
+docker-compose up
+```
+Use: Use [postman](https://www.getpostman.com/) and the [provided collection](https://github.com/yannhowe/feed_me/blob/master/feed-me.postman_collection.json)
+
+### Using pipenv
 - Clone repository
 - install [pipenv](https://pipenv.readthedocs.io/en/latest/)
 - Run: ```pipenv run flask run```
 - Test: ```pipenv run pytest```
-- Use: Use [postman](https://www.getpostman.com/) and the provided collection
+- Use: Use [postman](https://www.getpostman.com/) and the [provided collection](https://github.com/yannhowe/feed_me/blob/master/feed-me.postman_collection.json)

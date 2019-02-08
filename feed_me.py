@@ -281,3 +281,6 @@ def follow_user_feed(username):
             return jsonify({"error": "no user named %s" % followee })
         if not user_exists:
             return jsonify({"error": "no user named %s" % username })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
