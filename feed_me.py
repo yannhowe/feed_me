@@ -143,10 +143,14 @@ def get_activity():
 # endpoint to create new activity
 @app.route("/activity", methods=["POST"])
 def add_activity():
-    actor = request.json['actor']
-    verb = request.json['verb']
-    object = request.json['object']
-    target = request.json['target']
+    
+    try:
+        actor = request.json['actor']
+        verb = request.json['verb']
+        object = request.json['object']
+        target = request.json['target']
+    except:
+        return jsonify({"error": "something wrong with JSON request" })
 
     try:
         # Checks - https://techspot.zzzeek.org/2008/09/09/selecting-booleans/
