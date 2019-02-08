@@ -1,5 +1,7 @@
 ---
+
 test_name: Hello World
+
 stages:
   - name: Flask is up!
     request:
@@ -7,3 +9,128 @@ stages:
       method: GET
     response:
       status_code: 200
+
+  - name: Reset stuff
+    request:
+      url: http://127.0.0.1:5000/reset
+      method: GET
+    response:
+      status_code: 200
+---
+
+test_name: Activities
+
+stages:
+  - name: Create activity
+    request:
+      url: http://127.0.0.1:5000/activity
+      method: POST
+      json:
+        actor: "eric"
+        verb: "punched"
+        object: "null"
+        target: "niko"
+      headers:
+        content-type: application/json
+    response:
+      status_code: 200
+      headers:
+        content-type: application/json
+      body:
+        actor: "eric"
+        verb: "punched"
+        object: "null"
+        target: "niko"
+        datetime: !anything
+
+---
+
+test_name: Activity Feed
+
+stages:
+  - name: Get activity Feed
+    request:
+      url: http://127.0.0.1:5000/feed/eric
+      method: GET
+      headers:
+        content-type: application/json
+    response:
+      status_code: 200
+      headers:
+        content-type: application/json
+      body:
+        my_feed:
+          - actor: !anything
+            datetime: !anything
+            object: !anything
+            target: !anything
+            verb: !anything
+          - actor: !anything
+            datetime: !anything
+            object: !anything
+            target: !anything
+            verb: !anything
+
+---
+
+test_name: Following
+
+stages:
+  - name: UN Follow user
+    request:
+      url: http://127.0.0.1:5000/feed/ivan
+      method: POST
+      json:
+        unfollow: "eric"
+      headers:
+        content-type: application/json
+    response:
+      status_code: 200
+      headers:
+        content-type: application/json
+      body:
+        unfollow:
+          followee: "eric"
+          follower: "ivan"
+  - name: Follow user
+    request:
+      url: http://127.0.0.1:5000/feed/ivan
+      method: POST
+      json:
+        follow: "eric"
+      headers:
+        content-type: application/json
+    response:
+      status_code: 200
+      headers:
+        content-type: application/json
+      body:
+        follow:
+          followee: "eric"
+          follower: "ivan"
+
+---
+
+test_name: Friends Feed
+
+stages:
+  - name: List friends feed
+    request:
+      url: http://127.0.0.1:5000/feed/ivan/friends
+      method: GET
+    response:
+      status_code: 200
+      headers:
+        content-type: application/json
+      body:
+        friends_feed:
+          - actor: !anything
+            datetime: !anything
+            object: !anything
+            target: !anything
+            verb: !anything
+          - actor: !anything
+            datetime: !anything
+            object: !anything
+            target: !anything
+            verb: !anything
