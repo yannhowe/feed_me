@@ -196,22 +196,15 @@ def get_user_friends_feed(username):
 
     if  username_exists:
         user_follows_list = db.session.query(Following.followee).filter_by(follower=username).all()
-        
-        print(type(user_follows_list))
-        print(user_follows_list)
-        
+
         if not user_follows_list:
             return jsonify({"error": "user \'%s\' doesn't follow anyone" % username })
 
         user_follows_list = [r.followee for r in user_follows_list]
-        
-        print(type(user_follows_list))
-        print(user_follows_list)
-
         user_friends_feed = Activity.query.filter(Activity.actor.in_(user_follows_list)).all()
-        #print(user_friends_feed)
         result = { "friends_feed": activities_schema.dump(user_friends_feed).data}
         return jsonify(result)
+        
     else:
         return jsonify({"error": "no user named %s" % username })
 
@@ -274,7 +267,6 @@ def follow_user_feed(username):
 
             if following_exists:
                 following = Following.query.filter_by(follower=username).filter_by(followee=followee).first()
-                print(following)
                 db.session.delete(following)
                 db.session.commit()    
                 result = { "unfollow": following_schema.dump(following).data }
