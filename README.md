@@ -95,6 +95,10 @@ There are a number of things for the project I would change if this went into pr
 - Don't allow user to follow himself
 
 ## Growing in Scale and Features
+
+![image](./Web%20App%20Reference%20Architecture%20(4).png)
+***Fig. 1** Overall Architecture. Might differ slightly based on design choices.*
+
 Thoughts on scaling and adding features to the APIs for customer happiness:
 - Don't use flask to run the API, package and run the app with a WSGI application server like [Gunicorn](https://gunicorn.org/)
 - Use an API gateway like [KONG](https://konghq.com/kong/)/[APIGEE](https://apigee.com/api-management/#/homepage).[Amazon API Gateway](https://aws.amazon.com/api-gateway/) for
