@@ -86,7 +86,7 @@ datetime | DATETIME
 
 ## Going Further
 
-There are a number of things for the project I'd would change if this went into production at any scale:
+There are a number of things for the project I would change if this went into production at any scale:
 - Structure project files by  model/endpoint/functionality/project team
 - Use a database sutable for the scale like AWS RDS Aurora serverless
 - Use IDs as a unique constraint instead of usernames directly
@@ -94,7 +94,7 @@ There are a number of things for the project I'd would change if this went into 
 - Paginate the JSON replies properly
 - Don't allow user to follow himself
 
-## Growing in scale and features
+## Growing in Scale and Features
 Thoughts on scaling and adding features to the APIs for customer happiness:
 - Don't use flask to run the API, package and run the app with a WSGI application server like [Gunicorn](https://gunicorn.org/)
 - Use an API gateway like [KONG](https://konghq.com/kong/)/[APIGEE](https://apigee.com/api-management/#/homepage).[Amazon API Gateway](https://aws.amazon.com/api-gateway/) for
@@ -109,7 +109,7 @@ Thoughts on scaling and adding features to the APIs for customer happiness:
 - Use caching like [Memcached](https://memcached.org/) with [Flask-Cache](https://flask-caching.readthedocs.io/en/latest/) to cache data so reads don't hit the relational database
 - Start thinking about migrating away from flask/whatever ORM you are using to something lighter (could make development complex)
 - Start thinking about how you want to scale the application instances vertically/horizontally in AWS/Kubernetes (could cost a lot of money)
-- Use databases as a service (like [AWS RDS Aurora Serverless](https://aws.amazon.com/rds/aurora/serverless/)) to start quick, small and cheap. It scales to 64TB and 200000 writes/s at the [largest instance](https://aws.amazon.com/rds/mysql/instance-types/) (db.m4.16xlarge)
+- Use databases as a service (like [AWS RDS Aurora Serverless](https://aws.amazon.com/rds/aurora/serverless/)) to start quick, small and cheap. It scales to 64TB and 200,000 writes/s at the [largest instance](https://aws.amazon.com/rds/mysql/instance-types/) (db.m4.16xlarge)
 - Once it reaches a scale where cost/performance is a problem consider shifting to self-provisioned/configured databases because you probably understand the problem now well enough to optimize it correctly for cost/performance
 
 The above should be more than enough for servicing 1,000,000 users and shouldn't be too much of an issue for a Relational Database with caching, rate limiting, horizontally scaling app cluster for a simple text API like this one. 
@@ -118,7 +118,7 @@ If we expand the API to upload images and other media as well as
 - Decouple image/object processing services from HTTP end points using queing ([SQS](https://aws.amazon.com/sqs/), [RabbitMQ](https://www.rabbitmq.com/)) and notifications ([SNS](https://aws.amazon.com/sns/)) to fan out
 - Backend tasks like processing images, videos can be done using serverless functions ([Lambda](https://aws.amazon.com/lambda/), [kubeless](https://kubeless.io/))
 - You probably don't need streaming ([Kinesis](https://aws.amazon.com/kinesis/), [Kaftka](https://kafka.apache.org/)) unless you need to replay requests or have multiple consumers and really big data streams made of small bits
-- Use object storage to store objects ([AWS S3](https://aws.amazon.com/s3/), [b2](https://www.backblaze.com/b2/cloud-storage.html), [minio](https://www.minio.io/)), basically infitely scalable storage
+- Use object storage to store objects ([AWS S3](https://aws.amazon.com/s3/), [b2](https://www.backblaze.com/b2/cloud-storage.html), [minio](https://www.minio.io/)), basically infinitely scalable storage
 - Use CDN ([AWS Cloudfront](https://aws.amazon.com/cloudfront/)/[Akamai](https://www.akamai.com/)/[varnish](https://varnish-cache.org/)) to serve objects/static content with low latency
 
 Possible Stack (AWS Flavoured)
@@ -131,7 +131,7 @@ Possible Stack (AWS Flavoured)
 - Storage: [AWS S3](https://aws.amazon.com/s3/)
 - CI/CD: [Codestar](https://aws.amazon.com/codestar/)
 
-Other things that probably neeed to be thought about beyond the API:
+Other things that probably need to be thought about beyond the API:
 - Backup? (Dumping DB to S3)
 - Cross AZ/Region deployment for disaster recovery
 - Monitoring (CloudWatch/API Gateway)
