@@ -14,6 +14,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'fe
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
+#####
+# DB Models
+#####
+
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -72,6 +76,11 @@ activity_schema = ActivitySchema()
 activities_schema = ActivitySchema(many=True)
 
 
+#####
+# Endpoints
+#####
+
+# See if server running
 @app.route("/")
 def hello():
     return "Hello World!"
@@ -88,16 +97,23 @@ def setup():
         {"actor":"eric", "verb": "post", "object":"post:3", "target":""}, 
         {"actor":"ivan", "verb": "follow", "object":"null", "target":"niko"}
         ]
+    followings_to_create=[
+        {"followee": "eric", "follower": "ivan"}
+        ]
     for user in users_to_create:
         new_user = User(user)
         db.session.add(new_user)
     for activity in activity_to_create:
         new_activity = Activity(activity["actor"], activity["verb"], activity["object"], activity["target"])
         db.session.add(new_activity)
+    for following in followings_to_create:
+        new_following = Following(following["follower"], following["followee"])
+        db.session.add(new_following)
     db.session.commit()    
     all_users = User.query.all()
     all_activity = Activity.query.all()
-    result = {"users": users_schema.dump(all_users).data, "Activities": activities_schema.dump(all_activity).data}
+    all_following = Following.query.all()
+    result = {"users": users_schema.dump(all_users).data, "Activities": activities_schema.dump(all_activity).data, "Followings": followings_schema.dump(all_following).data}
     return jsonify(result)
 
 # endpoint to show all users
@@ -124,21 +140,6 @@ def get_activity():
     result = activities_schema.dump(all_activity)
     return jsonify(result.data)
 
-# endpoint to show all follows
-@app.route("/follows", methods=["GET"])
-def get_follows():
-
-    try:
-        all_follows = Following.query.all()
-    except:
-        return jsonify({"error": "no follows" })
-
-    if all_follows:
-        result = followings_schema.dump(all_follows)
-        return jsonify(result)
-    else:
-        return jsonify({"error": "no follows"})
-
 # endpoint to create new activity
 @app.route("/activity", methods=["POST"])
 def add_activity():
@@ -147,9 +148,12 @@ def add_activity():
     object = request.json['object']
     target = request.json['target']
 
-    # Checks - https://techspot.zzzeek.org/2008/09/09/selecting-booleans/
-    (actor_exists, ), = db.session.query(exists().where(User.username==actor))
-    (target_exists, ), = db.session.query(exists().where(User.username==target))
+    try:
+        # Checks - https://techspot.zzzeek.org/2008/09/09/selecting-booleans/
+        (actor_exists, ), = db.session.query(exists().where(User.username==actor))
+        (target_exists, ), = db.session.query(exists().where(User.username==target))
+    except:
+        return jsonify({"error": "Either actor or target doesn't exist in database"})
 
     if not verb:
         return jsonify({"error": "empty verb" })
@@ -181,33 +185,107 @@ def get_user_feed(username):
     else:
         return jsonify({"error": "no user named %s" % username })
 
+# endpoint to show user's friends feed
+@app.route("/feed/<username>/friends", methods=["GET"])
+def get_user_friends_feed(username):
+
+    try:
+        (username_exists, ), = db.session.query(exists().where(User.username==username))
+    except:
+        return jsonify({"error": "no user named %s" % username })
+
+    if  username_exists:
+        user_follows_list = db.session.query(Following.followee).filter_by(follower=username).all()
+        
+        print(type(user_follows_list))
+        print(user_follows_list)
+        
+        if not user_follows_list:
+            return jsonify({"error": "user \'%s\' doesn't follow anyone" % username })
+
+        user_follows_list = [r.followee for r in user_follows_list]
+        
+        print(type(user_follows_list))
+        print(user_follows_list)
+
+        user_friends_feed = Activity.query.filter(Activity.actor.in_(user_follows_list)).all()
+        #print(user_friends_feed)
+        result = { "friends_feed": activities_schema.dump(user_friends_feed).data}
+        return jsonify(result)
+    else:
+        return jsonify({"error": "no user named %s" % username })
+
+# endpoint to show all follows
+@app.route("/follows", methods=["GET"])
+def get_follows():
+
+    try:
+        all_follows = Following.query.all()
+    except:
+        return jsonify({"error": "no follows" })
+
+    if all_follows:
+        result = followings_schema.dump(all_follows)
+        return jsonify(result)
+    else:
+        return jsonify({"error": "no follows"})
+
 # endpoint to follow user feed
 @app.route("/feed/<username>", methods=["POST"])
 def follow_user_feed(username):
     
     try:
-        followee = request.json['follow']
+        jsonData = request.json
     except:
-        return jsonify({"error": "no key named \'follow\'" })
+        return jsonify({"error": "something wrong with JSON request" })
+    
+    if 'follow' in jsonData:
+        followee = jsonData['follow']
+        action = 'follow'
+
+    if 'unfollow' in jsonData:
+        followee = jsonData['unfollow']
+        action = 'unfollow'
 
     if not followee:
-        jsonify({"error": "user to follow not specified" })
-
+        return jsonify({"error": "user to follow not specified" })
 
     try:  
-        (followee_exists, ), = db.session.query(exists().where(User.username==username))
-        (following_exists, ), = db.session.query(exists().where(Following.follower==username).where(Following.followee==followee))
+        (user_exists, ), = db.session.query(exists().where(User.username==username))
+        (followee_exists, ), = db.session.query(exists().where(User.username==followee))
+        following_to_check = db.session.query(Following).filter(Following.follower==username, Following.followee==followee)
+        following_exists = db.session.query(following_to_check.exists()).scalar()
     except:
-        return jsonify({"error": "Error following user" })
-    
-    if followee_exists and not following_exists:
-        new_following = Following(username, followee)
-        db.session.add(new_following)
-        db.session.commit()    
-        result = following_schema.dump(new_following)
-        return jsonify(result.data)
+        return jsonify({"error": "Error for %s following %s, can't find one of them in the database." % (username, followee) })
+        
+    if user_exists and followee_exists:
+        if action is "follow":
+
+            if not following_exists:
+                following = Following(username, followee)
+                db.session.add(following)
+                db.session.commit()    
+                result = { "follow": following_schema.dump(following).data }
+                return jsonify(result)
+            else:
+                return jsonify({"error": "%s already follows %s" % (username, followee) })
+                
+        if action is "unfollow":
+
+            if following_exists:
+                following = Following.query.filter_by(follower=username).filter_by(followee=followee).first()
+                print(following)
+                db.session.delete(following)
+                db.session.commit()    
+                result = { "unfollow": following_schema.dump(following).data }
+                return jsonify(result)
+            else:
+                return jsonify({"error": "cannot unfollow, no such follow exists" })
+
+        return jsonify({"error": "Somethin broke, cannot follow or unfollow" })
+        
     else:
         if not followee_exists:
+            return jsonify({"error": "no user named %s" % followee })
+        if not user_exists:
             return jsonify({"error": "no user named %s" % username })
-        if following_exists:
-            return jsonify({"error": "%s already follows %s" % (username, followee) })
