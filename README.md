@@ -12,6 +12,7 @@ feed-me is a social media activity feed.
 
 ## Quick Start
 - Clone repository
+- install [pipenv](https://pipenv.readthedocs.io/en/latest/)
 - Run: ```pipenv run flask run```
-- See: http://127.0.0.1:5000/
 - Test: ```pipenv run pytest```
+- Use: Use [postman](https://www.getpostman.com/) and the provided collection

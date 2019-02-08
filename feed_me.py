@@ -204,7 +204,7 @@ def get_user_friends_feed(username):
         user_friends_feed = Activity.query.filter(Activity.actor.in_(user_follows_list)).all()
         result = { "friends_feed": activities_schema.dump(user_friends_feed).data}
         return jsonify(result)
-        
+
     else:
         return jsonify({"error": "no user named %s" % username })
 
