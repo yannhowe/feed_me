@@ -46,7 +46,7 @@ Task | URL | Method | URL Params | Data Params | Success Response | Error Respon
 1 | /activity | `POST` | none | ```{"actor": "eric", "verb": "punched", "object": "null", "target": "niko" }``` | ```{"actor": "eric", "datetime": "2019-02-08T08:07:19", "object": "null", "target": "niko", "verb": "punched"}``` | ```{"error": "something wrong with JSON request" }```
 2 | /feed/:username | `GET` | **Required:** username=[string] | none | `{"my_feed": [{ "actor": "ivan" "datetime": "2019-02-08T08:07:13", "object": "post:1", "target": "eric", "verb": "share" }]}` | `{"follow":{"followee":"ivan","follower":"eric"}}` | `{ "error": "" }`
 3 | /feed/:username | `POST` | **Required:** username=[string] | `"follow": username` | `{"follow":{"followee":"ivan","follower":"eric"}}` | `{ "error": "" }`
-4 | /feed/:username/friends | `GET` | **Required:** username=[string] |  | `{"friends_feed": [{"actor": "eric", "datetime": "2019-02-08T08:11:23", "object": "post:3", "target": "","verb": "post"}]}` | `{ "error": "" }`
+4 | /feed/:username/friends | `GET` | **Required:** username=[string] | none | `{"friends_feed": [{"actor": "eric", "datetime": "2019-02-08T08:11:23", "object": "post:3", "target": "","verb": "post"}]}` | `{ "error": "" }`
 5 | /feed/:username | `POST` | **Required:** username=[string] | `"unfollow":username` | `{"unfollow":{"followee":"ivan","follower":"eric"}}` | `{ "error": "" }`
 
 
