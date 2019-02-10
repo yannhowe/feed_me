@@ -91,8 +91,6 @@ There are a number of things for the project I would change if this went into pr
 - Use a database sutable for the scale like AWS RDS Aurora serverless
 - Use IDs as a unique constraint instead of usernames directly
 - Hide all the endpoints created for development convenience
-- Paginate the JSON replies properly
-- Don't allow user to follow himself
 
 ## Growing in Scale and Features
 

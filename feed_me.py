@@ -176,6 +176,12 @@ def add_activity():
 # endpoint to show user feed
 @app.route("/feed/<username>", methods=["GET"])
 def get_user_feed(username):
+    results_per_page = 1
+
+    try:
+        page = int(request.args.get('page', 1))    
+    except:
+        abort(404)
 
     try:
         (username_exists, ), = db.session.query(exists().where(User.username==username))
@@ -183,8 +189,28 @@ def get_user_feed(username):
         return jsonify({"error": "no user named %s" % username })
 
     if  username_exists:
-        user_feed = Activity.query.filter_by(actor=username).all()
-        result = { "my_feed": activities_schema.dump(user_feed).data}
+        user_feed = Activity.query.filter_by(actor=username).paginate(page, results_per_page, False)
+        
+        # pagination stuff
+        next_page = page + 1
+        previous_page = page-1
+        if previous_page<1:
+            previous_page = 1
+        
+        if user_feed.has_next:
+            next_url = request.base_url + "?" + "page=" + str(next_page)
+        if user_feed.has_prev:
+            previous_url = request.base_url + "?" + "page=" + str(previous_page)
+
+        if user_feed.has_next and user_feed.has_prev:
+            result = { "my_feed": activities_schema.dump(user_feed.items).data, "next_url": next_url, "previous_url": previous_url }
+        elif user_feed.has_next:
+            result = { "my_feed": activities_schema.dump(user_feed.items).data, "next_url": next_url }
+        elif user_feed.has_prev:
+            result = { "my_feed": activities_schema.dump(user_feed.items).data, "previous_url": previous_url }
+        else:
+            result = { "my_feed": activities_schema.dump(user_feed.items).data }
+
         return jsonify(result)
     else:
         return jsonify({"error": "no user named %s" % username })
@@ -192,6 +218,12 @@ def get_user_feed(username):
 # endpoint to show user's friends feed
 @app.route("/feed/<username>/friends", methods=["GET"])
 def get_user_friends_feed(username):
+    results_per_page = 1
+
+    try:
+        page = int(request.args.get('page', 1))    
+    except:
+        abort(404)
 
     try:
         (username_exists, ), = db.session.query(exists().where(User.username==username))
@@ -205,8 +237,27 @@ def get_user_friends_feed(username):
             return jsonify({"error": "user \'%s\' doesn't follow anyone" % username })
 
         user_follows_list = [r.followee for r in user_follows_list]
-        user_friends_feed = Activity.query.filter(Activity.actor.in_(user_follows_list)).all()
-        result = { "friends_feed": activities_schema.dump(user_friends_feed).data}
+        user_friends_feed = Activity.query.filter(Activity.actor.in_(user_follows_list)).paginate(page, results_per_page, False)
+        
+        # pagination stuff
+        next_page = page + 1
+        previous_page = page-1
+        if previous_page<1:
+            previous_page = 1
+        
+        if user_friends_feed.has_next:
+            next_url = request.base_url + "?" + "page=" + str(next_page)
+        if user_friends_feed.has_prev:
+            previous_url = request.base_url + "?" + "page=" + str(previous_page)
+
+        if user_friends_feed.has_next and user_friends_feed.has_prev:
+            result = { "friends_feed": activities_schema.dump(user_friends_feed.items).data, "next_url": next_url, "previous_url": previous_url }
+        elif user_friends_feed.has_next:
+            result = { "friends_feed": activities_schema.dump(user_friends_feed.items).data, "next_url": next_url }
+        elif user_friends_feed.has_prev:
+            result = { "friends_feed": activities_schema.dump(user_friends_feed.items).data, "previous_url": previous_url }
+        else:
+            result = { "friends_feed": activities_schema.dump(user_friends_feed.items).data}
         return jsonify(result)
 
     else:
@@ -238,6 +289,8 @@ def follow_user_feed(username):
     
     if 'follow' in jsonData:
         followee = jsonData['follow']
+        if username == followee:
+            return jsonify({"error": "user cannot follow himself" })
         action = 'follow'
 
     if 'unfollow' in jsonData:

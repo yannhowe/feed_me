@@ -65,11 +65,25 @@ stages:
             object: !anything
             target: !anything
             verb: !anything
+        next_url: !anything
+  - name: Get activity Feed page 2
+    request:
+      url: http://127.0.0.1:5000/feed/eric?page=2
+      method: GET
+      headers:
+        content-type: application/json
+    response:
+      status_code: 200
+      headers:
+        content-type: application/json
+      body:
+        my_feed:
           - actor: !anything
             datetime: !anything
             object: !anything
             target: !anything
             verb: !anything
+        previous_url: !anything
 
 ---
 
@@ -129,8 +143,20 @@ stages:
             object: !anything
             target: !anything
             verb: !anything
+        next_url: !anything
+  - name: List friends feed page 2
+    request:
+      url: http://127.0.0.1:5000/feed/ivan/friends?page=2
+      method: GET
+    response:
+      status_code: 200
+      headers:
+        content-type: application/json
+      body:
+        friends_feed:
           - actor: !anything
             datetime: !anything
             object: !anything
             target: !anything
             verb: !anything
+        previous_url: !anything
