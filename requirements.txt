@@ -34,4 +34,4 @@ sqlalchemy==1.2.17
 stevedore==1.30.0
 tavern[pytest]==0.22.1
 urllib3==1.24.1
-werkzeug==0.14.1
+werkzeug==3.0.1
